@@ -1,11 +1,15 @@
 #include "mapreduce.h"
+#include "stdlib.h"
 
 // Used to store key-value pairs?
 typedef struct 
 {
     char key;
     char value;
+    key_value *next;
 } key_value;
+
+key_value *head = NULL;
 
 void MR_Emit(char *key, char *value) {
     
@@ -28,4 +32,11 @@ void MR_Run(int argc, char *argv[],
             Reducer reduce, int num_reducers, 
             Partitioner partition, int num_partitions) {
 
+    if (!(argc > 1)) {
+        exit(1);
+    }
+
+    for (int i = 1; i < argc; i++) {
+        (*map)(argv[i]);
+    }
 }
