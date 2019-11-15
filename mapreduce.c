@@ -5,7 +5,8 @@
 typedef struct
 {
     int bucket;
-    list_node *next;
+    list_node *next_node;
+    key_value *head;
 } list_node;
 
 typedef struct 
