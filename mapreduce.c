@@ -2,6 +2,12 @@
 #include "stdlib.h"
 
 // Used to store key-value pairs?
+typedef struct
+{
+    int bucket;
+    list_node *next;
+} list_node;
+
 typedef struct 
 {
     char key;
@@ -9,10 +15,19 @@ typedef struct
     key_value *next;
 } key_value;
 
-key_value *head = NULL;
+
 
 void MR_Emit(char *key, char *value) {
-    
+    key_value *new = malloc(sizeof(key_value));
+    new->key = key;
+    new->value = value;
+    new->next = NULL;
+    // Linked list hash table is empty
+    if (head == NULL) {
+        head = new;
+    } else {
+
+    }
 }
 
 unsigned long MR_DefaultHashPartition(char *key, int num_partitions) {
