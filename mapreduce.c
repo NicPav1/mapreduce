@@ -1,33 +1,41 @@
 #include "mapreduce.h"
-#include "stdlib.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <pthread.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <semaphore.h>
 
 // Used to store key-value pairs?
-typedef struct
-{
-    int bucket;
-    list_node *next_node;
-    key_value *head;
-} list_node;
-
-typedef struct 
+typedef struct key_value
 {
     char key;
     char value;
-    key_value *next;
-} key_value;
+    struct key_value *next;
+} KEY_VALUE;
 
+int nm;
 
+KEY_VALUE *list;
 
 void MR_Emit(char *key, char *value) {
-    key_value *new = malloc(sizeof(key_value));
-    new->key = key;
-    new->value = value;
-    new->next = NULL;
-    // Linked list hash table is empty
-    if (head == NULL) {
-        head = new;
+    int hash = MR_DefaultHashPartition(key, nm);
+    if ((list + hash) == NULL) {
+        KEY_VALUE *new = malloc(sizeof(KEY_VALUE));
+        new->key = *key;
+        new->value = *value;
+        new->next = NULL;
+        *(list+hash) = *new;
     } else {
-
+        KEY_VALUE *new = malloc(sizeof(KEY_VALUE));
+        new->key = *key;
+        new->value = *value;
+        new->next = NULL;
+        KEY_VALUE *last = (list + hash);
+        while (last->next != NULL) {
+            last = last->next;
+        }
+        last->next = new;
     }
 }
 
@@ -40,7 +48,7 @@ unsigned long MR_DefaultHashPartition(char *key, int num_partitions) {
 }
 
 unsigned long MR_SortedPartition(char *key, int num_partitions) {
-
+    return 0;
 }
 
 void MR_Run(int argc, char *argv[], 
@@ -48,6 +56,12 @@ void MR_Run(int argc, char *argv[],
             Reducer reduce, int num_reducers, 
             Partitioner partition, int num_partitions) {
 
+    nm = num_partitions;
+    list = malloc(sizeof(KEY_VALUE)*num_partitions);
+    for (int k = 0; k < num_partitions; k++) {
+        KEY_VALUE *ke = NULL;
+        list[k] = *ke;
+    }
     if (!(argc > 1)) {
         exit(1);
     }
@@ -55,4 +69,25 @@ void MR_Run(int argc, char *argv[],
     for (int i = 1; i < argc; i++) {
         (*map)(argv[i]);
     }
+    for (int r = 0; r < num_reducers; r++) {
+        (*reduce)() 
+    }
+}
+
+int g = 0;  // Used to keep track of get_next
+
+void* get_next(char *key, int partition) {
+    KEY_VALUE *k = (list + partition);
+    for (int i = 0; i < g; i ++) {
+        if (k->next != NULL) {
+            k = k->next;
+        } else {
+            g = 0;
+            k = NULL;
+            return k;
+            break;
+        }
+    }
+    g++;
+    return k;
 }
