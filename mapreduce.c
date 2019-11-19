@@ -14,8 +14,8 @@ void* get_next(char *key, int partition);
 // Used to store key-value pairs?
 struct key_value
 {
-    char key;
-    char value;
+    char *key;
+    char *value;
     struct key_value *next;
 };
 
@@ -45,7 +45,8 @@ void MR_Run(int argc, char *argv[],
     exit(0);
     for (int r = 0; r < num_reducers; r++) {
         if (list[r] != NULL) {
-            struct key_value *z = list[r];
+            struct key_value *z = malloc(sizeof(struct key_value*));
+            z = list[r];
             while (z != NULL) {
                 (*reduce)(z->key, (*get_next)(z->key, r), r);
                 z = z->next;
@@ -58,14 +59,14 @@ void MR_Emit(char *key, char *value) {
     int hash = MR_DefaultHashPartition(key, nm);
     if (list[hash] == NULL) {
         struct key_value *new = malloc(sizeof(struct key_value));
-        new->key = *key;
-        new->value = *value;
+        new->key = key;
+        new->value = value;
         new->next = NULL;
         list[hash] = new;
     } else {
         struct key_value *new = malloc(sizeof(struct key_value));
-        new->key = *key;
-        new->value = *value;
+        new->key = key;
+        new->value = value;
         new->next = NULL;
         struct key_value *last = list[hash];
         while (last->next != NULL) {
