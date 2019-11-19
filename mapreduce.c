@@ -9,7 +9,7 @@
 void MR_Emit(char *key, char *value);
 unsigned long MR_DefaultHashPartition(char *key, int num_partitions);
 unsigned long MR_SortedPartition(char *key, int num_partitions);
-void* get_next(char *key, int partition);
+char* get_next(char *key, int partition);
 
 // Used to store key-value pairs?
 struct key_value
@@ -46,7 +46,7 @@ void MR_Run(int argc, char *argv[],
         if (list[r] != NULL) {
             struct key_value *z = malloc(sizeof(struct key_value*));
             z = list[r];
-            (*reduce)(z->key, (*get_next)(z->key, r), r);
+            (*reduce)(z->key, &get_next, r);
         }
     }
 }
@@ -84,7 +84,7 @@ unsigned long MR_SortedPartition(char *key, int num_partitions) {
     return 0;
 }
 
-void* get_next(char *key, int partition) {
+char* get_next(char *key, int partition) {
     struct key_value *k = list[partition];
     if (list[partition] == NULL) {
         return NULL;
