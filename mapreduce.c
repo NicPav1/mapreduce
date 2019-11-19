@@ -31,7 +31,7 @@ void MR_Run(int argc, char *argv[],
     nm = num_partitions;
     list = malloc(num_partitions * sizeof(struct key_value*));
     for (int k = 0; k < num_partitions; k++) {
-        list[k] = malloc(sizeof(struct key_value*));
+        //list[k] = malloc(sizeof(struct key_value*));
         struct key_value *ke = NULL;
         list[k] = ke;
     }
@@ -42,15 +42,11 @@ void MR_Run(int argc, char *argv[],
     for (int i = 1; i < argc; i++) {
         (*map)(argv[i]);
     }
-    exit(0);
     for (int r = 0; r < num_reducers; r++) {
         if (list[r] != NULL) {
             struct key_value *z = malloc(sizeof(struct key_value*));
             z = list[r];
-            while (z != NULL) {
-                (*reduce)(z->key, (*get_next)(z->key, r), r);
-                z = z->next;
-            }
+            (*reduce)(z->key, (*get_next)(z->key, r), r);
         }
     }
 }
@@ -88,22 +84,12 @@ unsigned long MR_SortedPartition(char *key, int num_partitions) {
     return 0;
 }
 
-//int g = 0;  // Used to keep track of get_next
-
 void* get_next(char *key, int partition) {
-    struct key_value *k = list[partition-1];
-    char* val = (char*)(k->value);
-    list[partition-1] = k->next;
-    //for (int i = 0; i < g; i ++) {
-    //    if (k->next != NULL) {
-    //        k = k->next;
-    //    } else {
-    //        g = 0;
-    //        k = NULL;
-    //        return k;
-    //        break;
-    //    }
-    //}
-    //g++;
+    struct key_value *k = list[partition];
+    if (list[partition] == NULL) {
+        return NULL;
+    }
+    char* val = k->value;
+    list[partition] = k->next;
     return val;
 }
