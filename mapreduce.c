@@ -40,13 +40,13 @@ void MR_Run(int argc, char *argv[],
     }
     
     for (int i = 1; i < argc; i++) {
-        (*map)(argv[i]);
+        map(argv[i]);
     }
     for (int r = 0; r < num_reducers; r++) {
         if (list[r] != NULL) {
             struct key_value *z = malloc(sizeof(struct key_value*));
             z = list[r];
-            (*reduce)(z->key, &get_next, r);
+            reduce(z->key, &get_next, r);
         }
     }
 }
@@ -55,13 +55,15 @@ void MR_Emit(char *key, char *value) {
     int hash = MR_DefaultHashPartition(key, nm);
     if (list[hash] == NULL) {
         struct key_value *new = malloc(sizeof(struct key_value));
-        new->key = key;
+        new->key = malloc(sizeof(strlen(key))+1);
+        strcpy(new->key, key);
         new->value = value;
         new->next = NULL;
         list[hash] = new;
     } else {
         struct key_value *new = malloc(sizeof(struct key_value));
-        new->key = key;
+        new->key = malloc(sizeof(strlen(key))+1);
+        strcpy(new->key, key);
         new->value = value;
         new->next = NULL;
         struct key_value *last = list[hash];
