@@ -6,32 +6,68 @@
 #include <sys/stat.h>
 #include <semaphore.h>
 
+void MR_Emit(char *key, char *value);
+unsigned long MR_DefaultHashPartition(char *key, int num_partitions);
+unsigned long MR_SortedPartition(char *key, int num_partitions);
+void* get_next(char *key, int partition);
+
 // Used to store key-value pairs?
-typedef struct key_value
+struct key_value
 {
     char key;
     char value;
     struct key_value *next;
-} KEY_VALUE;
+};
 
 int nm;
 
-KEY_VALUE *list;
+struct key_value **list;
+
+void MR_Run(int argc, char *argv[], 
+            Mapper map, int num_mappers, 
+            Reducer reduce, int num_reducers, 
+            Partitioner partition, int num_partitions) {
+    
+    nm = num_partitions;
+    list = malloc(num_partitions * sizeof(struct key_value*));
+    for (int k = 0; k < num_partitions; k++) {
+        list[k] = malloc(sizeof(struct key_value));
+        struct key_value *ke = NULL;
+        list[k] = ke;
+    }
+    if (!(argc > 1)) {
+        exit(1);
+    }
+    
+    for (int i = 1; i < argc; i++) {
+        (*map)(argv[i]);
+    }
+    exit(0);
+    for (int r = 0; r < num_reducers; r++) {
+        if (list[r] != NULL) {
+            struct key_value *z = list[r];
+            while (z != NULL) {
+                (*reduce)((char*)(z->key), (*get_next)((char*)(z->key), r), r);
+                z = z->next;
+            }
+        }
+    }
+}
 
 void MR_Emit(char *key, char *value) {
     int hash = MR_DefaultHashPartition(key, nm);
-    if ((list + hash) == NULL) {
-        KEY_VALUE *new = malloc(sizeof(KEY_VALUE));
+    if (list[hash] == NULL) {
+        struct key_value *new = malloc(sizeof(struct key_value));
         new->key = *key;
         new->value = *value;
         new->next = NULL;
-        *(list+hash) = *new;
+        list[hash] = new;
     } else {
-        KEY_VALUE *new = malloc(sizeof(KEY_VALUE));
+        struct key_value *new = malloc(sizeof(struct key_value));
         new->key = *key;
         new->value = *value;
         new->next = NULL;
-        KEY_VALUE *last = (list + hash);
+        struct key_value *last = list[hash];
         while (last->next != NULL) {
             last = last->next;
         }
@@ -51,43 +87,22 @@ unsigned long MR_SortedPartition(char *key, int num_partitions) {
     return 0;
 }
 
-void MR_Run(int argc, char *argv[], 
-            Mapper map, int num_mappers, 
-            Reducer reduce, int num_reducers, 
-            Partitioner partition, int num_partitions) {
-
-    nm = num_partitions;
-    list = malloc(sizeof(KEY_VALUE)*num_partitions);
-    for (int k = 0; k < num_partitions; k++) {
-        KEY_VALUE *ke = NULL;
-        list[k] = *ke;
-    }
-    if (!(argc > 1)) {
-        exit(1);
-    }
-
-    for (int i = 1; i < argc; i++) {
-        (*map)(argv[i]);
-    }
-    for (int r = 0; r < num_reducers; r++) {
-        (*reduce)() 
-    }
-}
-
-int g = 0;  // Used to keep track of get_next
+//int g = 0;  // Used to keep track of get_next
 
 void* get_next(char *key, int partition) {
-    KEY_VALUE *k = (list + partition);
-    for (int i = 0; i < g; i ++) {
-        if (k->next != NULL) {
-            k = k->next;
-        } else {
-            g = 0;
-            k = NULL;
-            return k;
-            break;
-        }
-    }
-    g++;
-    return k;
+    struct key_value *k = list[partition-1];
+    char* val = k->value;
+    list[partition-1] = k->next;
+    //for (int i = 0; i < g; i ++) {
+    //    if (k->next != NULL) {
+    //        k = k->next;
+    //    } else {
+    //        g = 0;
+    //        k = NULL;
+    //        return k;
+    //        break;
+    //    }
+    //}
+    //g++;
+    return val;
 }
