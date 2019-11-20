@@ -27,11 +27,14 @@ int nm;
 
 struct key_value **list;
 
+Partitioner p;
+
 void MR_Run(int argc, char *argv[], 
             Mapper map, int num_mappers, 
             Reducer reduce, int num_reducers, 
             Partitioner partition, int num_partitions) {
     
+    p = partition;
     nm = num_partitions;
     list = malloc(num_partitions * sizeof(struct key_value*));
     for (int k = 0; k < num_partitions; k++) {
@@ -60,27 +63,32 @@ void MR_Run(int argc, char *argv[],
             z = list[r];
             while (z != NULL) {
                 printf("%s\n", z->key);
-                z = z->next;
+                z = list[r];
             }
         }
     }
     */
-    
-    for (int r = 0; r < num_reducers; r++) {
-        if (list[r] != NULL) {
+   
+    int r = 0; //Keep track of reducers
+    for (int p = 0; p < num_partitions; p++) {
+        if (r > num_reducers) {
+            break;
+        }
+        if (list[p] != NULL) {
             struct key_value *z = malloc(sizeof(struct key_value*));
-            z = list[r];
+            z = list[p];
             while(z != NULL) {
-                reduce(z->key, &get_next, r);
-                z = list[r];
-                //z = z->next;
+                reduce(z->key, &get_next, p);
+                z = list[p];
             }
+            r++;
         }
     }
+    
 }
 
 void MR_Emit(char *key, char *value) {
-    int hash = MR_DefaultHashPartition(key, nm);
+    int hash = p(key, nm);
     if (list[hash] == NULL) {
         struct key_value *new = malloc(sizeof(struct key_value));
         new->key = malloc(sizeof(strlen(key))+1);
@@ -114,7 +122,9 @@ unsigned long MR_DefaultHashPartition(char *key, int num_partitions) {
 }
 
 unsigned long MR_SortedPartition(char *key, int num_partitions) {
-    return 0;
+    char *end;
+    if (num_partitions == 1) return 0;
+    else return((unsigned long)((unsigned long)num_partitions*(unsigned long)strtol(key, &end, 10)>>32));
 }
 
 char* get_next(char *key, int partition) {
