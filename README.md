@@ -1,5 +1,7 @@
 # mapreduce
 
+Operating Systems hw, assignment as follows:
+
 Let’s now get into the exact code you’ll have to build. The MapReduce infrastructure you will build supports the execution of user-defined Map() and Reduce() functions.
 
 As from the original paper: “Map(), written by the user, takes an input pair and produces a set of intermediate key/value pairs. The MapReduce library groups together all intermediate values associated with the same intermediate key K and passes them to the Reduce() function.”
@@ -132,3 +134,6 @@ Thread Management This part is fairly straightforward. You should create num_map
 Partitioning and Sorting Your central data structure should be concurrent, allowing mappers to each put values into different partitions correctly and efficiently. Once the mappers have completed, a sorting phase should order the key/value-lists. Then, finally, each reducer thread should start calling the user-defined Reduce() function on the keys in sorted order per partition. You should think about what type of locking is needed throughout this process for correctness.
 Memory Management One last concern is memory management. The MR_Emit() function is passed a key/value pair; it is the responsibility of the MR library to make copies of each of these. However, avoid making too many copies of them since the goal is to design an efficient concurrent data structure. Then, when the entire mapping and reduction is complete, it is the responsibility of the MR library to free everything.
 You could use data structures and APIs only from stdio.h, stdlib.h, pthread.h, string.h, sys/stat.h, and semaphore.h. If you want to implement some other data structures you can add that as a part of your submissions.
+
+## To Run
+Cannot be ran without the instructor's files and test cases
